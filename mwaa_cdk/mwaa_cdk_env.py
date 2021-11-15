@@ -29,7 +29,8 @@ class MwaaCdkStackEnv(core.Stack):
         
 
         dags_bucket_arn = dags_bucket.bucket_arn
-        helpers.execut(AWS_S3_PLUGINS_DIR='plugins.zip', AWS_S3_BUCKET=dags_bucket.bucket_name)
+        response =helpers.execut(AWS_S3_PLUGINS_DIR='plugins.zip', AWS_S3_BUCKET=dags_bucket.bucket_name)
+        plugins_object_version=response.get('VersionId')
         # Create MWAA IAM Policies and Roles, copied from MWAA documentation site
 
         mwaa_policy_document = iam.PolicyDocument(
@@ -192,7 +193,7 @@ class MwaaCdkStackEnv(core.Stack):
             min_workers=5,
             schedulers=2,
             network_configuration=network_configuration,
-            #plugins_s3_object_version=plugin_obj_version.get_response_field("VersionId"),
+            plugins_s3_object_version=plugins_object_version,
             # plugins_s3_path="plugins.zip",
             #requirements_s3_object_version=req_obj_version.get_response_field("VersionId"),
             # requirements_s3_path="Requirements/requirements.txt",
