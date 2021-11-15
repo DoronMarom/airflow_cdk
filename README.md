@@ -66,7 +66,12 @@ command.
 
 
 
-
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin git@github.com:DoronMarom/airflow_cdk.git
+git push -u origin main
 
 Enjoy!
 
