@@ -1,0 +1,11 @@
+{
+    "python.pythonPath": "/Users/rotemlevi/.pyenv/versions/ds-airflow-mwaa-3.7.3",
+    "python.autoComplete.extraPaths": [
+        "./plugins",
+        "./dags"
+    ],
+    "python.analysis.extraPaths": [
+        "./plugins",
+        "./dags"
+    ]
+}
