@@ -5,7 +5,7 @@ import aws_cdk.aws_s3_deployment as s3deploy
 import aws_cdk.aws_mwaa as mwaa
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_kms as kms
-from  helper_functions import helpers
+from helper_functions import helpers
 from aws_cdk.aws_ec2 import Vpc, SecurityGroup
  
 
@@ -27,10 +27,12 @@ class MwaaCdkStackEnv(core.Stack):
 
         
         
-
+        
         dags_bucket_arn = dags_bucket.bucket_arn
-        response =helpers.execut(AWS_S3_PLUGINS_DIR='plugins.zip', AWS_S3_BUCKET=dags_bucket.bucket_name)
-        plugins_object_version=response.get('VersionId')
+
+        #SECOND RUN
+        # helpers.execut(AWS_S3_PLUGINS_DIR='plugins.zip')
+       
         # Create MWAA IAM Policies and Roles, copied from MWAA documentation site
 
         mwaa_policy_document = iam.PolicyDocument(
@@ -176,6 +178,57 @@ class MwaaCdkStackEnv(core.Stack):
             'service': 'MWAA Apache AirFlow'
         }
 
+        # Get object versions
+        req_obj_version = custom.AwsCustomResource(self, "GetReqV",
+            on_update={
+                "service": "S3",
+                "action": "headObject",
+                "parameters": {
+                    "Bucket": dags_bucket.bucket_name,
+                    "Key": "Requirements/requirements.txt"
+                },
+                "physical_resource_id": custom.PhysicalResourceId.from_response("VersionId")},
+            policy=custom.AwsCustomResourcePolicy.from_sdk_calls(resources=custom.AwsCustomResourcePolicy.ANY_RESOURCE),
+            role = iam.Role(
+                    scope=self,
+                    id=f'{id}-LambdaRole',
+                    assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
+                    managed_policies=[
+                        iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
+                        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess")
+                    ]
+                )
+        )
+        core.CfnOutput(
+            self, "ReqObjVersion",
+            value=req_obj_version.get_response_field("VersionId")
+        )
+
+        plugin_obj_version = custom.AwsCustomResource(self, "GetPluginV",
+            on_update={
+                "service": "S3",
+                "action": "headObject",
+                "parameters": {
+                    "Bucket": dags_bucket.bucket_name,
+                    "Key": "plugins.zip"
+                },
+                "physical_resource_id": custom.PhysicalResourceId.from_response("VersionId")},
+            policy=custom.AwsCustomResourcePolicy.from_sdk_calls(resources=custom.AwsCustomResourcePolicy.ANY_RESOURCE),
+            role = iam.Role(
+                    scope=self,
+                    id=f'{id}-LambdaRole-2',
+                    assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
+                    managed_policies=[
+                        iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
+                        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess")
+                    ]
+                )
+        )
+        core.CfnOutput(
+            self, "PluginObjVersion",
+            value=plugin_obj_version.get_response_field("VersionId")
+        )
+
         
         # Create MWAA environment using all the info above
 
@@ -193,10 +246,10 @@ class MwaaCdkStackEnv(core.Stack):
             min_workers=5,
             schedulers=2,
             network_configuration=network_configuration,
-            plugins_s3_object_version=plugins_object_version,
+            # plugins_s3_object_version=plugin_obj_version.get_response_field("VersionId"),
             # plugins_s3_path="plugins.zip",
-            #requirements_s3_object_version=req_obj_version.get_response_field("VersionId"),
-            # requirements_s3_path="Requirements/requirements.txt",
+            requirements_s3_object_version=req_obj_version.get_response_field("VersionId"),
+            requirements_s3_path="Requirements/requirements.txt",
             source_bucket_arn=dags_bucket_arn,
             webserver_access_mode='PUBLIC_ONLY',
             #weekly_maintenance_window_start=None

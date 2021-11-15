@@ -11,7 +11,7 @@ import asyncio
 from typing import IO
 
 
-AWS_S3_BUCKET= ''
+AWS_S3_BUCKET= 'bigabid-airflow-cdk-doron'
 AIRFLOW_FOLDER= './'
 AWS_S3_DEST_DIR= 'cdk_airflow'
 
@@ -25,10 +25,10 @@ def execut(PLUGINS_DIR='./plugins',AWS_S3_PLUGINS_DIR=None, AWS_S3_BUCKET=None):
     config = TransferConfig(multipart_threshold= 5 * GB)
     s3: S3Client
     s3=boto3.client("s3")
-    plugins(s3, PLUGINS_DIR, AWS_S3_PLUGINS_DIR, plugins_whitelist, config, AWS_S3_BUCKET)
+    plugins(s3, PLUGINS_DIR, AWS_S3_PLUGINS_DIR, plugins_whitelist, config)
 
 
-def plugins(s3, PLUGINS_DIR, AWS_S3_PLUGINS_DIR, plugins_whitelist, config, AWS_S3_BUCKET):
+def plugins(s3, PLUGINS_DIR, AWS_S3_PLUGINS_DIR, plugins_whitelist, config):
         zip_stream:IO[bytes]=io.BytesIO()
         with ZipFile(zip_stream, 'w') as zip:
             for source, dirs, files in walk(PLUGINS_DIR):
@@ -39,4 +39,3 @@ def plugins(s3, PLUGINS_DIR, AWS_S3_PLUGINS_DIR, plugins_whitelist, config, AWS_
         zip_stream.seek(0)
         s3.upload_fileobj(Fileobj=zip_stream, Bucket=AWS_S3_BUCKET, Key=AWS_S3_PLUGINS_DIR, Config=config)
         return  s3.head_object(Bucket=AWS_S3_BUCKET, Key=AWS_S3_PLUGINS_DIR)
-
