@@ -29,7 +29,7 @@ class MwaaCdkStackEnv(core.Stack):
         
 
         dags_bucket_arn = dags_bucket.bucket_arn
-        helpers.execut(AWS_S3_PLUGINS_DIR='plugins.zip')
+        helpers.execut(AWS_S3_PLUGINS_DIR='plugins.zip', AWS_S3_BUCKET=dags_bucket.bucket_name)
         # Create MWAA IAM Policies and Roles, copied from MWAA documentation site
 
         mwaa_policy_document = iam.PolicyDocument(

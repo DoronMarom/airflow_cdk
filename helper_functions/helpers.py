@@ -11,13 +11,13 @@ import asyncio
 from typing import IO
 
 
-AWS_S3_BUCKET= 'bigabid-airflow-cdk-v14'
+AWS_S3_BUCKET= ''
 AIRFLOW_FOLDER= './'
 AWS_S3_DEST_DIR= 'cdk_airflow'
 
 
 
-def execut(PLUGINS_DIR='./plugins',AWS_S3_PLUGINS_DIR=None):
+def execut(PLUGINS_DIR='./plugins',AWS_S3_PLUGINS_DIR=None, AWS_S3_BUCKET=None):
     plugins_whitelist = ['.py']
     KB = 1024
     MB = KB ** 2
@@ -25,10 +25,10 @@ def execut(PLUGINS_DIR='./plugins',AWS_S3_PLUGINS_DIR=None):
     config = TransferConfig(multipart_threshold= 5 * GB)
     s3: S3Client
     s3=boto3.client("s3")
-    plugins(s3, PLUGINS_DIR, AWS_S3_PLUGINS_DIR, plugins_whitelist, config)
+    plugins(s3, PLUGINS_DIR, AWS_S3_PLUGINS_DIR, plugins_whitelist, config, AWS_S3_BUCKET)
 
 
-def plugins(s3, PLUGINS_DIR, AWS_S3_PLUGINS_DIR, plugins_whitelist, config):
+def plugins(s3, PLUGINS_DIR, AWS_S3_PLUGINS_DIR, plugins_whitelist, config, AWS_S3_BUCKET):
         zip_stream:IO[bytes]=io.BytesIO()
         with ZipFile(zip_stream, 'w') as zip:
             for source, dirs, files in walk(PLUGINS_DIR):
